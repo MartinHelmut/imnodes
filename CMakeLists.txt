@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
 
+set(IMNODES_VERSION_MAJOR 1)
+set(IMNODES_VERSION_MINOR 0)
+set(IMNODES_VERSION_PATCH 0)
+set(IMNODES_VERSION ${IMNODES_VERSION_MAJOR}.${IMNODES_VERSION_MINOR}.${IMNODES_VERSION_PATCH})
+
 project(
   ImNodes
   DESCRIPTION "A small, dependency-free node editor for Dear ImGUI."
-  VERSION 1.0.0
+  VERSION ${IMNODES_VERSION}
   LANGUAGES CXX)
 
 # Options
@@ -11,7 +16,7 @@ project(
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(IMNODES_NO_INSTALL "Skip the installation process" OFF)
+option(IMNODES_INSTALL "Generate install target" OFF)
 option(IMNODES_BUILD_SHARED "Build ImNodes as shared library" OFF)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -58,19 +63,26 @@ endif ()
 
 # Library setup
 
-set(IMNODES_SRCS src/imnodes.cpp src/imnodes.hpp src/imnodes_internal.hpp)
-
 if (IMNODES_BUILD_SHARED OR BUILD_SHARED_LIBS)
   message(STATUS "Build ${PROJECT_NAME} as shared library")
-  add_library(${PROJECT_NAME} SHARED ${IMNODES_SRCS})
+  set(IMNODES_LIBRARY_TYPE SHARED)
 else ()
   message(STATUS "Build ${PROJECT_NAME} as static library")
-  add_library(${PROJECT_NAME} STATIC ${IMNODES_SRCS})
+  set(IMNODES_LIBRARY_TYPE STATIC)
 endif ()
 
+add_library(${PROJECT_NAME} ${IMNODES_LIBRARY_TYPE}
+  src/imnodes.cpp src/imnodes.hpp src/imnodes_internal.hpp)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME} PUBLIC src)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  VERSION ${IMNODES_VERSION}
+  SOVERSION ${IMNODES_VERSION_MAJOR})
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+
 target_link_libraries(${PROJECT_NAME} PUBLIC imgui::imgui)
 
 # Compile options
@@ -83,7 +95,7 @@ endif ()
 
 # Installation
 
-if (NOT ${IMNODES_NO_INSTALL})
+if (IMNODES_INSTALL)
   message(STATUS "Install ${PROJECT_NAME}")
   install(TARGETS ${PROJECT_NAME})
 endif ()
