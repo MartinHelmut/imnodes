@@ -123,7 +123,7 @@ struct ImOptionalIndex {
     return m_index != rhs;
   }
 
-  static constexpr int INVALID_INDEX = -1;
+  static const int INVALID_INDEX = -1;
 
  private:
   int m_index;
@@ -162,11 +162,11 @@ struct ImNodeData {
 
 struct ImPinData {
   int Id;
-  int ParentNodeIdx{};
+  ImVec2 Pos;  // screen-space coordinates
   ImRect AttributeRect;
+  int ParentNodeIdx{};
   ImNodesAttributeType Type{ImNodesAttributeType_None};
   ImNodesPinShape Shape{ImNodesPinShape_CircleFilled};
-  ImVec2 Pos;  // screen-space coordinates
   int Flags{ImNodesAttributeFlags_None};
 
   struct {
@@ -200,8 +200,6 @@ struct ImClickInteractionState {
   struct {
     ImRect Rect;  // Coordinates in grid space
   } BoxSelector;
-
-  ImClickInteractionState() = default;
 };
 
 struct ImNodesColElement {
@@ -253,8 +251,8 @@ struct ImNodesEditorContext {
 
   // Mini-map state set by MiniMap()
 
-  bool MiniMapEnabled{false};
   ImNodesMiniMapLocation MiniMapLocation{};
+  bool MiniMapEnabled{false};
   float MiniMapSizeFraction{0.0F};
   ImNodesMiniMapNodeHoveringCallback MiniMapNodeHoveringCallback{nullptr};
   ImNodesMiniMapNodeHoveringCallbackUserData MiniMapNodeHoveringCallbackUserData{nullptr};
@@ -265,7 +263,7 @@ struct ImNodesEditorContext {
   ImRect MiniMapContentScreenSpace;
   float MiniMapScaling{0.0F};
 
-  ImNodesEditorContext() : Panning(0.F, 0.F), PrimaryNodeOffset(0.F, 0.F) {}
+  ImNodesEditorContext() : Panning(0.0F, 0.0F), PrimaryNodeOffset(0.0F, 0.0F), ClickInteraction() {}
 };
 
 struct ImNodesContext {
@@ -388,6 +386,35 @@ static inline int ObjectPoolFindOrCreateIndex(ImObjectPool<T>& objects, const in
   objects.InUse[index] = true;
 
   return index;
+}
+
+template <>
+inline int ObjectPoolFindOrCreateIndex(ImObjectPool<ImNodeData>& nodes, const int node_id) {
+  int node_idx = nodes.IdMap.GetInt(static_cast<ImGuiID>(node_id), -1);
+
+  // Construct new node
+  if (node_idx == -1) {
+    if (nodes.FreeList.empty()) {
+      node_idx = nodes.Pool.size();
+      IM_ASSERT(nodes.Pool.size() == nodes.InUse.size());
+      const int new_size = nodes.Pool.size() + 1;
+      nodes.Pool.resize(new_size);
+      nodes.InUse.resize(new_size);
+    } else {
+      node_idx = nodes.FreeList.back();
+      nodes.FreeList.pop_back();
+    }
+    IM_PLACEMENT_NEW(nodes.Pool.Data + node_idx) ImNodeData(node_id);
+    nodes.IdMap.SetInt(static_cast<ImGuiID>(node_id), node_idx);
+
+    ImNodesEditorContext& editor = EditorContextGet();
+    editor.NodeDepthOrder.push_back(node_idx);
+  }
+
+  // Flag node as used
+  nodes.InUse[node_idx] = true;
+
+  return node_idx;
 }
 
 template <typename T>
