@@ -13,9 +13,25 @@ Features:
 * To integrate either copy-paste the contents of the `src/` into your project.
 * Or use as a **CMake module**.
 
-This repository includes a few example files, under `examples/`.
-
 ## Usage
+
+ImNodes can be used as CMake module, for example with `FetchContent`.
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+  imnodes
+  GIT_REPOSITORY "https://github.com/MartinHelmut/imnodes.git"
+  GIT_TAG v1.0.0
+)
+FetchContent_MakeAvailable(imnodes)
+```
+
+And link it to your target together with Dear ImGUI.
+
+```cmake
+target_link_libraries(SomeAppTarget PRIVATE imgui imnodes)
+```
 
 Initialize the library together with Dear ImGUI.
 
