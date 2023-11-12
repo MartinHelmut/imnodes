@@ -6,7 +6,7 @@ set(IMNODES_VERSION_PATCH 0)
 set(IMNODES_VERSION ${IMNODES_VERSION_MAJOR}.${IMNODES_VERSION_MINOR}.${IMNODES_VERSION_PATCH})
 
 project(
-  ImNodes
+  imnodes
   DESCRIPTION "A small, dependency-free node editor for Dear ImGUI."
   VERSION ${IMNODES_VERSION}
   LANGUAGES CXX)
@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(IMNODES_INSTALL "Generate install target" OFF)
-option(IMNODES_BUILD_SHARED "Build ImNodes as shared library" OFF)
+option(IMNODES_BUILD_SHARED "Build imnodes as shared library" OFF)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
